@@ -21,6 +21,7 @@ func (c *Car) StartEngine() (string, error) {
 		return "", fmt.Errorf("Cannot start engine already started")
 	}
 
+	c.EngineStarted = true
 	return "Engine Started!", nil
 }
 

@@ -9,12 +9,21 @@ import (
 )
 
 type AssemblySpot struct {
+	id                int
 	vehicleToAssemble *vehicle.Car
 	assemblyLog       string
 }
 
-func (s *AssemblySpot) SetVehicle(v *vehicle.Car) {
-	s.vehicleToAssemble = v
+func NewAssemblySpot(id int) *AssemblySpot {
+	return &AssemblySpot{id: id}
+}
+
+func (s *AssemblySpot) SetVehicle(v vehicle.Car) {
+	s.vehicleToAssemble = &v
+}
+
+func (s *AssemblySpot) CleanSpot() {
+	s.vehicleToAssemble = nil
 }
 
 func (s *AssemblySpot) GetAssembledVehicle() *vehicle.Car {

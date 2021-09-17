@@ -1,27 +1,28 @@
 package factory
 
 import (
-	"fmt"
-
 	".main.go/assemblyspot"
 	".main.go/vehicle"
+	"log"
 )
 
 const assemblySpots int = 5
 
 type Factory struct {
 	AssemblingSpots chan *assemblyspot.AssemblySpot
+	FinishedCars    chan *vehicle.Car
 }
 
 func New() *Factory {
 	factory := &Factory{
 		AssemblingSpots: make(chan *assemblyspot.AssemblySpot, assemblySpots),
+		FinishedCars:    nil,
 	}
 
 	totalAssemblySpots := 0
 
 	for {
-		factory.AssemblingSpots <- &assemblyspot.AssemblySpot{}
+		factory.AssemblingSpots <- assemblyspot.NewAssemblySpot(totalAssemblySpots)
 
 		totalAssemblySpots++
 
@@ -33,27 +34,26 @@ func New() *Factory {
 	return factory
 }
 
-//HINT: this function is currently not returning anything, make it return right away every single vehicle once assembled,
-//(Do not wait for all of them to be assembled to return them all, send each one ready over to main)
 func (f *Factory) StartAssemblingProcess(amountOfVehicles int) {
 	vehicleList := f.generateVehicleLots(amountOfVehicles)
 
-	for _, vehicle := range vehicleList {
-		fmt.Println("Assembling vehicle...")
+	for _, car := range vehicleList {
+
 		idleSpot := <-f.AssemblingSpots
+		idleSpot.SetVehicle(car)
+
 		go func() {
-			idleSpot.SetVehicle(&vehicle)
-			vehicle, err := idleSpot.AssembleVehicle()
-			if err != nil {
-				vehicle.TestingLog = f.testCar(vehicle)
-				vehicle.AssembleLog = idleSpot.GetAssembledLogs()
+			log.Println("Assembling vehicle...")
+			result, err := idleSpot.AssembleVehicle()
+			if err == nil {
+				result.TestingLog = f.testCar(result)
+				result.AssembleLog = idleSpot.GetAssembledLogs()
 			}
-			idleSpot.SetVehicle(nil)
+
+			idleSpot.CleanSpot()
+			f.FinishedCars <- result
 			f.AssemblingSpots <- idleSpot
 		}()
-
-
-
 	}
 }
 

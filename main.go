@@ -2,14 +2,29 @@ package main
 
 import (
 	".main.go/factory"
+	".main.go/vehicle"
+	"log"
+	"sync"
 )
 
 const carsAmount = 100
 
 func main() {
-	factory := factory.New()
+	output := make(chan *vehicle.Car, carsAmount)
 
-	//Hint: change appropriately for making factory give each vehicle once assembled, even though the others have not been assembled yet,
-	//each vehicle delivered to main should display testinglogs and assemblelogs with the respective vehicle id
-	factory.StartAssemblingProcess(carsAmount)
+	f := factory.New()
+	f.FinishedCars = output
+
+	wg := sync.WaitGroup{}
+	wg.Add(carsAmount)
+	go func() {
+		for car := range output {
+			log.Println(car.AssembleLog)
+			log.Println(car.TestingLog)
+			wg.Done()
+		}
+	}()
+
+	f.StartAssemblingProcess(carsAmount)
+	wg.Wait()
 }

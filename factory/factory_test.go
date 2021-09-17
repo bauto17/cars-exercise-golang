@@ -1,6 +1,8 @@
 package factory
 
 import (
+	".main.go/vehicle"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -12,8 +14,7 @@ type factoryUnitTestSuite struct {
 }
 
 func (s *factoryUnitTestSuite) SetupSuite() {
-
-	s.adapter = &Factory{}
+	s.adapter = New()
 }
 
 func TestFactoryUnitTestSuite(t *testing.T) {
@@ -21,7 +22,27 @@ func TestFactoryUnitTestSuite(t *testing.T) {
 }
 
 func (s *factoryUnitTestSuite) TestSamble() {
-	//code here
-	// Assert
-	s.Assert().Equal(1, 1)
+	cars := 8
+	wg := sync.WaitGroup{}
+	wg.Add(cars)
+	results := make(chan *vehicle.Car, cars)
+	s.adapter.FinishedCars = results
+	go func() {
+		for car := range results {
+			s.Assert().NotNil(car)
+			if car != nil {
+				s.Assert().Equal("Assembled", car.Engine)
+				s.Assert().Equal("Assembled", car.Chassis)
+				s.Assert().Equal("Assembled", car.Dash)
+				s.Assert().Equal("Assembled", car.Electronics)
+				s.Assert().Equal("Assembled", car.Sits)
+				s.Assert().Equal("Assembled", car.Tires)
+				s.Assert().Equal("Assembled", car.Windows)
+			}
+			wg.Done()
+		}
+	}()
+	s.adapter.StartAssemblingProcess(cars)
+
+	wg.Wait()
 }
