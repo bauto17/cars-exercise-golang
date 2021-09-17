@@ -40,20 +40,20 @@ func (f *Factory) StartAssemblingProcess(amountOfVehicles int) {
 
 	for _, vehicle := range vehicleList {
 		fmt.Println("Assembling vehicle...")
-
 		idleSpot := <-f.AssemblingSpots
-		idleSpot.SetVehicle(&vehicle)
-		vehicle, err := idleSpot.AssembleVehicle()
+		go func() {
+			idleSpot.SetVehicle(&vehicle)
+			vehicle, err := idleSpot.AssembleVehicle()
+			if err != nil {
+				vehicle.TestingLog = f.testCar(vehicle)
+				vehicle.AssembleLog = idleSpot.GetAssembledLogs()
+			}
+			idleSpot.SetVehicle(nil)
+			f.AssemblingSpots <- idleSpot
+		}()
 
-		if err != nil {
-			continue
-		}
 
-		vehicle.TestingLog = f.testCar(vehicle)
-		vehicle.AssembleLog = idleSpot.GetAssembledLogs()
 
-		idleSpot.SetVehicle(nil)
-		f.AssemblingSpots <- idleSpot
 	}
 }
 
